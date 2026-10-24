@@ -1,0 +1,119 @@
+ICT SNIPER PRO - DOCUMENTATION
+================================
+
+FILES
+-----
+ICT_Sniper_Pro_fixed claude 1.pine is the final TradingView Pine Script v6 strategy.
+This workspace intentionally contains no Python backend, broker connector, credentials, or live-trading service.
+
+OVERVIEW
+--------
+The strategy is designed for XAU/GOLD and BTC symbols on chart timeframes of 4H or lower.
+It combines confirmed 4H context, daily reference levels, local liquidity sweeps, FVG/IFVG events,
+order blocks, premium/discount location, momentum filters, risk-based sizing, and bracket exits.
+
+STRATEGY RULES
+--------------
+BOS/CHOCH:
+- Confirmed local and 4H pivot levels are broken by a closing price.
+- A direction change is labeled CHOCH; continuation is labeled BOS.
+
+LIQUIDITY SWEEPS:
+- SSL: price wicks below a confirmed swing low and closes above it.
+- BSL: price wicks above a confirmed swing high and closes below it.
+- A local sweep remains active for the configured sweep window.
+
+FVG/IFVG:
+- Bullish FVG: low > high[2] and the gap is at least 0.1 ATR.
+- Bearish FVG: high < low[2] and the gap is at least 0.1 ATR.
+- FVGs expire after the configured maximum age.
+- A bullish FVG becomes bearish IFVG when close falls below its lower boundary.
+- A bearish FVG becomes bullish IFVG when close rises above its upper boundary.
+
+ORDER BLOCKS:
+- On a confirmed 4H BOS, the latest opposite-color 4H candle is used if it is no more than 10 bars old.
+
+PREMIUM/DISCOUNT:
+- The confirmed 100-bar 4H high/low range midpoint is equilibrium.
+- Long setups require entry below equilibrium.
+- Short setups require entry above equilibrium.
+
+ENTRY ELIGIBILITY:
+- Symbol must contain XAU/GOLD or BTC.
+- Chart timeframe must be 4H or lower.
+- Confirmed data, volume, 4H trend, matching sweep, displacement, risk/reward, location,
+  and ATR stop bounds are required.
+- Long and short directions can be independently disabled.
+- Optional session filtering can block entries outside the configured session.
+- Existing position or pending order, daily limits, loss limits, and cooldown block new entries.
+
+CONFLUENCE SCORE:
+- Eligibility starts with 3 points for context, signal, displacement, RR, location, and stop validity.
+- Extra points may come from MACD/RSI, EMA, VWAP, golden pocket, order block, daily sweep relation,
+  local trend, VMC, and Gamma.
+- minSc is required. perfSc selects the configured risk multiplier.
+- A score cannot override a failed eligibility condition.
+
+RISK AND EXITS
+--------------
+- EUR risk is selected separately for XAU and BTC.
+- Sizing uses the confirmed EURUSD daily reference, stop distance, syminfo.pointvalue,
+  and syminfo.mincontract, rounded down to a valid contract quantity.
+- maxQty optionally caps the resulting quantity. A quantity below one minimum contract is rejected.
+- Stops use the sweep extreme plus an ATR buffer and must be inside the configured ATR range.
+- Targets use the configured minimum and maximum RR bounds.
+- Pyramiding is disabled and only one position or pending order is allowed.
+- Optional breakeven moves the stop to entry after 1R.
+- Optional trailing stop moves by trailR times the initial R after 1R.
+- FVG limit orders expire after fvgExp bars; market entries expire after one bar if not filled.
+
+HTF AND REPAINTING POLICY
+-------------------------
+- Daily and 4H requests use lookahead_off.
+- HTF values are copied only on the first chart bar of a new HTF period, using the last completed HTF bar.
+- Confirmed pivots are used only after their confirmation bars.
+- Realtime and historical behavior still require verification in TradingView Bar Replay.
+- Chart stops are not guaranteed maximum monetary losses because gaps, spread, slippage, contract rules,
+  and broker execution can change realized results.
+
+ALERTS
+------
+The strategy provides long and short alertcondition entries and structured order-fill alert messages.
+Payload fields include strategy, version, symbol, timeframe, direction, entry, stop, and target.
+No secrets are included. Alerts are notifications, not authorization to trade.
+An external receiver must validate freshness, symbol permissions, duplicate signals, current position,
+risk limits, and data quality before any broker action.
+
+VISUALS AND DIAGNOSTICS
+-----------------------
+The script can display EMA21, EMA50, EMA200, daily VWAP and bands, 4H range and golden pocket,
+previous-day high/low, order blocks, FVG/IFVG boxes, sweep labels, spike labels, VMC, tables, and debug data.
+Turning visual display off does not disable the underlying setup logic.
+
+BACKTESTING AND VALIDATION
+--------------------------
+The strategy must be compiled and tested in TradingView Strategy Tester using the same symbol/feed,
+timezone, timeframe, session, and contract settings intended for evaluation.
+Use Bar Replay around daily and 4H boundaries. Review expectancy, drawdown, average R, trade count,
+slippage sensitivity, gaps, limit fills, same-bar stop/target ordering, and out-of-sample periods.
+No profitability claim is made.
+
+Local validation completed:
+- VS Code diagnostics reported no Pine errors.
+- Parentheses and source structure checks passed.
+- Two alert conditions and four strategy entry branches were detected.
+- TradingView compilation and Strategy Tester execution were not available locally.
+
+SECURITY AND DEPLOYMENT
+-----------------------
+Do not put API keys, webhook secrets, or account credentials in Pine source or alert payloads.
+Use paper alerts and paper execution before any separately authorized live deployment.
+Keep a versioned copy of every deployed script and monitor alert delivery, symbol/timeframe,
+position state, rejected orders, and data freshness.
+
+LIMITATIONS
+-----------
+ICT terminology is represented by deterministic approximations and is not an objective market guarantee.
+The script has no persistent backend, order reconciliation, broker adapter, kill switch, portfolio exposure
+controller, account-equity sizing, or durable restart recovery.
+Yahoo trial data previously downloaded for validation was removed from this workspace as requested.
