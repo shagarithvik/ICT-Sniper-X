@@ -87,7 +87,6 @@ inSession = not useSession or not na(time(timeframe.period, tradeSess))
 newH4 = timeframe.change("240")
 newD  = timeframe.change("D")
 tfOk  = timeframe.in_seconds() <= 14400
-dataReady = not na(atr) and not na(h4Hi100) and not na(h4Lo100) and not na(h4EQ)
 
 // EURUSD (voor risico-omrekening)
 r_fx = request.security("FX:EURUSD", "D", close, lookahead=barmerge.lookahead_off)
@@ -138,6 +137,7 @@ if newH4
 h4pH = newH4 ? r_pH[1] : na
 h4pL = newH4 ? r_pL[1] : na
 h4EQ = (h4Hi100 + h4Lo100) / 2.0
+dataReady = not na(atr) and not na(h4Hi100) and not na(h4Lo100) and not na(h4EQ)
 
 calcQ(dist, mult) =>
     mc  = math.max(syminfo.mincontract, 0.00000001)
